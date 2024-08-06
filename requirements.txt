@@ -1,5 +1,6 @@
 streamlit
 PyPDF2
+pypdf
 langchain
 langchain_openai
 langchain_community
