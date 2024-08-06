@@ -10,11 +10,8 @@ from langchain_community.document_loaders.pdf import PyPDFLoader
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 from langchain.memory.buffer import ConversationBufferMemory
 
-#from langchain.chains.question_answering.chain import load_qa_chain
 from langchain.chains.qa_with_sources.loading import load_qa_with_sources_chain
-
 from langchain_core.prompts.prompt import PromptTemplate
-from langchain_core.prompts.chat import ChatPromptTemplate
 
 import os
 import shutil
@@ -63,7 +60,7 @@ def get_vector_store(text_chunks, ids, api_key):
 def get_conversational_chain(api_key):
     prompt_template = """
     You are a firendly PDF assistant the helps the user to understand the contents of the uploaded files and give responses based on the content present in the context.
-    For the first query, greet the user first.
+    For the first query, greet the user.
     Answer the question/query correctly from the provided context, make sure to provide all the details. 
     If the user asks for the summary of the document, go through the contents of the document and give your response. 
     If you don't find the answer, go through the context again, even then if the answer is not in provided context just say, "Answer is not available in the context", don't provide the wrong answer and do not leave any answer unfinished. Always provide full answer and complete the sentence.
@@ -95,7 +92,7 @@ def get_conversational_chain(api_key):
 def user_input(user_question, api_key):
     embeddings = OpenAIEmbeddings(openai_api_key=api_key)
     db = FAISS.load_local("faiss_index", embeddings=embeddings, allow_dangerous_deserialization=True) # Enable dangerous deserialization
-    docs = db.similarity_search(query=user_question, fetch_k=5)
+    docs = db.similarity_search(query=user_question, fetch_k=7)
     
     chain = get_conversational_chain(api_key)
 
@@ -144,8 +141,8 @@ def main():
             
         with st.sidebar:
             st.title("Menu")
-            pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type=".pdf", accept_multiple_files=True, key="pdf_uploader")
-            if st.button("Embed Documents", key="process_button") and api_key:  # Check if API key is provided before processing
+            pdf_docs = st.file_uploader("Upload your PDF files and click the Submit Button", type=".pdf", accept_multiple_files=True, key="pdf_uploader")
+            if st.button("Submit", key="process_button") and api_key:  # Check if API key is provided before processing
                 with st.spinner("Processing..."):
                     for pdf in pdf_docs:
                         #raw_text = get_pdf_text(pdf_docs)
@@ -161,17 +158,17 @@ def main():
                         
                         st.success(f"{pdf.name} embedded successfully.")
                     st.caption("You can now ask questions from the uploaded documents.")
-            
-            if st.button("Reset Chat"):
-                st.session_state.chat_messages = []
-                st.rerun()
-                
+           
             if st.button("Logout", key="logout_button"):
-                shutil.rmtree("faiss_index", ignore_errors=True)
-                shutil.rmtree("docs", ignore_errors=True)
-                st.session_state.logged_in = False
-                st.rerun()
-
+                    shutil.rmtree("faiss_index", ignore_errors=True)
+                    shutil.rmtree("docs", ignore_errors=True)
+                    st.session_state.logged_in = False
+                    st.rerun()
+    
+            if st.button("Clear Chat"):
+                    st.session_state.chat_messages = []
+                    st.rerun()
+                
         if x:=st.chat_input("Ask a Question from the PDF Files", key='user_question'): # input for continuous conversation
        
             if x and api_key:  # Ensure API key and x, that is,user question are provided
@@ -182,7 +179,7 @@ def main():
     else:
         with form:
             with st.container(border=True):
-                st.title("Login Page")
+                st.title("Login")
                 st.caption("Please enter the credentials to continue.")
 
                 # Create login form
