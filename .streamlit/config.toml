@@ -1,0 +1,9 @@
+[client]
+showSidebarNavigation = true
+showErrorDetails = false
+
+[theme]
+base = "dark"
+
+[runner]
+magicEnabled = false
